@@ -12,11 +12,30 @@ export function requireUser(req, res, next) {
   next();
 }
 
+// Owner Studio uses its own email/password authentication.
+// It does not depend on Discord OAuth or req.user.
 export function requireOwner(req, res, next) {
-  const owner = (process.env.OWNER_EMAIL || "").toLowerCase();
-  const email = (req.user?.email || "").toLowerCase();
+  if (
+    req.session?.ownerAuthenticated !== true ||
+    !req.session?.ownerEmail
+  ) {
+    return res.status(401).json({
+      error: "Owner authentication required."
+    });
+  }
 
-  if (!req.user || !owner || email !== owner) {
+  const configuredOwner = (
+    process.env.OWNER_EMAIL || ""
+  ).trim().toLowerCase();
+
+  const authenticatedOwner = (
+    req.session.ownerEmail || ""
+  ).trim().toLowerCase();
+
+  if (
+    !configuredOwner ||
+    authenticatedOwner !== configuredOwner
+  ) {
     return res.status(404).json({
       error: "Not found"
     });
@@ -42,7 +61,10 @@ export async function attachUser(req, res, next) {
     if (!user) {
       req.session.destroy(error => {
         if (error) {
-          console.error("[Rivo] Session cleanup failed:", error);
+          console.error(
+            "[Rivo] Session cleanup failed:",
+            error
+          );
         }
       });
 
