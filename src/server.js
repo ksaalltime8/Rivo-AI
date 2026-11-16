@@ -1,3 +1,4 @@
+
 import "dotenv/config";
 
 import express from "express";
@@ -21,9 +22,9 @@ import ownerAuth from "./routes/owner-auth.js";
 import api from "./routes/api.js";
 import webhooks from "./routes/webhooks.js";
 
-const FRONTEND_ORIGIN = (
+const FRONTEND_ORIGIN = String(
   env.FRONTEND_URL || "https://iik27.com"
-).replace(/\/$/, "");
+).trim().replace(/\/+$/, "");
 
 async function startServer() {
   validateProductionConfig();
@@ -33,8 +34,6 @@ async function startServer() {
   const app = express();
 
   app.disable("x-powered-by");
-
-  // Hostinger reverse proxy.
   app.set("trust proxy", 1);
 
   // CORS configuration.
@@ -151,7 +150,7 @@ async function startServer() {
     })
   );
 
-  // Discord and other provider authentication rate limit.
+  // Provider authentication rate limit.
   app.use(
     "/api/auth",
     rateLimit({
@@ -162,7 +161,7 @@ async function startServer() {
     })
   );
 
-  // Dedicated owner login rate limit.
+  // Owner login rate limit.
   const ownerLoginLimiter = rateLimit({
     windowMs: 15 * 60_000,
     limit: 10,
@@ -177,6 +176,7 @@ async function startServer() {
   app.use((req, res, next) => {
     if (
       req.path.startsWith("/api/") &&
+      req.session &&
       !req.session.csrfToken
     ) {
       req.session.csrfToken = randomState();
@@ -188,13 +188,44 @@ async function startServer() {
   // Attach the regular Rivo user, when one is signed in.
   app.use(attachUser);
 
+  // Explicit CSRF endpoint. Save the session before returning the token.
+  app.get("/api/csrf", (req, res, next) => {
+    if (!req.session) {
+      return res.status(500).json({
+        error: "Session unavailable."
+      });
+    }
+
+    if (!req.session.csrfToken) {
+      req.session.csrfToken = randomState();
+    }
+
+    req.session.save(error => {
+      if (error) {
+        return next(error);
+      }
+
+      res.set("Cache-Control", "no-store");
+
+      res.json({
+        csrfToken: req.session.csrfToken
+      });
+    });
+  });
+
   // Existing Discord/Kick/YouTube authentication.
   app.use("/api/auth", auth);
 
-  // Separate private owner authentication.
+  // Apply the owner login limiter ONLY to POST /login.
   app.use(
     "/api/owner/auth",
-    ownerLoginLimiter,
+    (req, res, next) => {
+      if (req.method === "POST" && req.path === "/login") {
+        return ownerLoginLimiter(req, res, next);
+      }
+
+      next();
+    },
     csrfGuard,
     ownerAuth
   );
@@ -266,6 +297,7 @@ async function startServer() {
     console.log("[Rivo] Hostinger proxy trust enabled");
     console.log(`[Rivo] CORS frontend: ${FRONTEND_ORIGIN}`);
     console.log("[Rivo] Separate owner authentication enabled");
+    console.log("[Rivo] CSRF session persistence enabled");
     console.log("[Rivo] API-only mode enabled");
   });
 
