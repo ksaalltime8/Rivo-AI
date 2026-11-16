@@ -1,0 +1,502 @@
+[
+  {
+    "name": "ping",
+    "description": "Check Rivo latency.",
+    "category": "Rivo & platform"
+  },
+  {
+    "name": "serverstats",
+    "description": "Show detailed server statistics including members, bots, channels, roles, boosts, and voice occupancy.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "userinfo",
+    "description": "View a member profile.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "avatar",
+    "description": "Show a user's avatar.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "setup",
+    "description": "Initialize Rivo settings.",
+    "category": "Rivo & platform"
+  },
+  {
+    "name": "ban",
+    "description": "Ban a member.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "kick",
+    "description": "Kick a member.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "timeout",
+    "description": "Timeout a member.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "untimeout",
+    "description": "Remove a member timeout.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "purge",
+    "description": "Delete recent messages.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "warn",
+    "description": "Warn a member.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "warnings",
+    "description": "View a member's warnings.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "lock",
+    "description": "Lock this text channel.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "unlock",
+    "description": "Unlock this text channel.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "slowmode",
+    "description": "Set channel slowmode.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "nickname",
+    "description": "Change a member nickname.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "role",
+    "description": "Add or remove a role.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "poll",
+    "description": "Create a poll.",
+    "category": "Community & support"
+  },
+  {
+    "name": "suggest",
+    "description": "Submit a community suggestion.",
+    "category": "Community & support"
+  },
+  {
+    "name": "level",
+    "description": "View your level or another member's.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "leaderboard",
+    "description": "Show the server XP leaderboard.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "balance",
+    "description": "View your Rivo wallet.",
+    "category": "Economy & games"
+  },
+  {
+    "name": "daily",
+    "description": "Claim your daily coins.",
+    "category": "Economy & games"
+  },
+  {
+    "name": "work",
+    "description": "Work for some coins.",
+    "category": "Economy & games"
+  },
+  {
+    "name": "coinflip",
+    "description": "Flip a coin.",
+    "category": "Fun & utilities"
+  },
+  {
+    "name": "8ball",
+    "description": "Ask the magic 8-ball.",
+    "category": "Fun & utilities"
+  },
+  {
+    "name": "ticket",
+    "description": "Open a private support ticket.",
+    "category": "Community & support"
+  },
+  {
+    "name": "close",
+    "description": "Close the current ticket.",
+    "category": "Community & support"
+  },
+  {
+    "name": "announce",
+    "description": "Send an announcement to a channel.",
+    "category": "Community & support"
+  },
+  {
+    "name": "say",
+    "description": "Make Rivo send a message.",
+    "category": "Community & support"
+  },
+  {
+    "name": "embed",
+    "description": "Publish a simple rich embed.",
+    "category": "Community & support"
+  },
+  {
+    "name": "choose",
+    "description": "Choose randomly from a list.",
+    "category": "Fun & utilities"
+  },
+  {
+    "name": "roll",
+    "description": "Roll a dice.",
+    "category": "Fun & utilities"
+  },
+  {
+    "name": "coin",
+    "description": "Flip a coin.",
+    "category": "Fun & utilities"
+  },
+  {
+    "name": "reverse",
+    "description": "Reverse some text.",
+    "category": "Fun & utilities"
+  },
+  {
+    "name": "membercount",
+    "description": "Show server member counts.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "channelinfo",
+    "description": "Show information about a channel.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "roleinfo",
+    "description": "Show information about a role.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "servericon",
+    "description": "Show the server icon.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "serverbanner",
+    "description": "Show the server banner.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "botinfo",
+    "description": "Show Rivo bot information.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "invite",
+    "description": "Get an invite link for Rivo.",
+    "category": "Rivo & platform"
+  },
+  {
+    "name": "unban",
+    "description": "Unban a user by ID.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "purgebots",
+    "description": "Remove recent bot messages.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "purgeuser",
+    "description": "Delete recent messages from one member.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "clearwarnings",
+    "description": "Clear a member's warning history.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "createchannel",
+    "description": "Create a text channel.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "deletechannel",
+    "description": "Delete a channel.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "createrole",
+    "description": "Create a server role.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "deleterole",
+    "description": "Delete a server role.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "addrole",
+    "description": "Give a role to a member.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "removerole",
+    "description": "Remove a role from a member.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "settopic",
+    "description": "Change this channel topic.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "nickname-reset",
+    "description": "Reset a member nickname.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "remindme",
+    "description": "Set a personal reminder (minutes).",
+    "category": "Community & support"
+  },
+  {
+    "name": "pollquick",
+    "description": "Create a yes/no poll.",
+    "category": "Community & support"
+  },
+  {
+    "name": "userinfo-self",
+    "description": "View your Discord profile.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "rolelist",
+    "description": "List server roles.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "channellist",
+    "description": "List server channels.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "emojilist",
+    "description": "List custom server emojis.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "randomnumber",
+    "description": "Generate a random number.",
+    "category": "Fun & utilities"
+  },
+  {
+    "name": "valostatus",
+    "description": "Check official VALORANT service status.",
+    "category": "Fun & utilities"
+  },
+  {
+    "name": "gamestatus",
+    "description": "Check official publisher status for supported games including Apex, Fortnite, League, Minecraft, Roblox, Rainbow Six Siege, and PUBG.",
+    "category": "Fun & utilities"
+  },
+  {
+    "name": "report",
+    "description": "Report a member to moderators.",
+    "category": "Community & support"
+  },
+  {
+    "name": "afk",
+    "description": "Set your AFK status.",
+    "category": "Community & support"
+  },
+  {
+    "name": "memberage",
+    "description": "Show account age for a member.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "tempvoice",
+    "description": "Configure the temporary voice-room lobby.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "lockdown",
+    "description": "Lock all text channels for @everyone.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "unlockdown",
+    "description": "Remove Rivo lockdown overwrites.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "whois",
+    "description": "Look up a Discord user.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "ticketpanel",
+    "description": "Post a support ticket panel in this channel.",
+    "category": "Rivo & platform"
+  },
+  {
+    "name": "commands",
+    "description": "Show Rivo command categories.",
+    "category": "Rivo & platform"
+  },
+  {
+    "name": "uptime",
+    "description": "Show how long Rivo has been online.",
+    "category": "Rivo & platform"
+  },
+  {
+    "name": "servercreated",
+    "description": "Show when this server was created.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "randommember",
+    "description": "Pick a random server member.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "purge-links",
+    "description": "Delete recent messages containing links.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "purge-attachments",
+    "description": "Delete recent messages with attachments.",
+    "category": "Moderation & server management"
+  },
+  {
+    "name": "memberroles",
+    "description": "Show a member's roles.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "botpermissions",
+    "description": "Show Rivo's permissions in this server.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "emoji",
+    "description": "Show an emoji larger.",
+    "category": "Fun & utilities"
+  },
+  {
+    "name": "bank",
+    "description": "View your wallet and bank balance.",
+    "category": "Economy & games"
+  },
+  {
+    "name": "deposit",
+    "description": "Deposit coins into your bank.",
+    "category": "Economy & games"
+  },
+  {
+    "name": "withdraw",
+    "description": "Withdraw coins from your bank.",
+    "category": "Economy & games"
+  },
+  {
+    "name": "pay",
+    "description": "Pay another member.",
+    "category": "Economy & games"
+  },
+  {
+    "name": "shop",
+    "description": "Browse the server economy shop.",
+    "category": "Economy & games"
+  },
+  {
+    "name": "buy",
+    "description": "Buy an item from the shop.",
+    "category": "Economy & games"
+  },
+  {
+    "name": "inventory",
+    "description": "View your purchased items.",
+    "category": "Economy & games"
+  },
+  {
+    "name": "slots",
+    "description": "Play the slots with your wallet coins.",
+    "category": "Economy & games"
+  },
+  {
+    "name": "blackjack",
+    "description": "Play a quick blackjack round.",
+    "category": "Economy & games"
+  },
+  {
+    "name": "rps",
+    "description": "Play rock paper scissors.",
+    "category": "Fun & utilities"
+  },
+  {
+    "name": "trivia",
+    "description": "Answer a quick trivia question.",
+    "category": "Fun & utilities"
+  },
+  {
+    "name": "fish",
+    "description": "Go fishing for economy rewards.",
+    "category": "Economy & games"
+  },
+  {
+    "name": "hunt",
+    "description": "Go hunting for economy rewards.",
+    "category": "Economy & games"
+  },
+  {
+    "name": "rob",
+    "description": "Attempt to rob another member.",
+    "category": "Economy & games"
+  },
+  {
+    "name": "crime",
+    "description": "Take a risky job for coins.",
+    "category": "Economy & games"
+  },
+  {
+    "name": "moneyboard",
+    "description": "Show the richest members in this server.",
+    "category": "Economy & games"
+  },
+  {
+    "name": "profile",
+    "description": "View your Rivo community profile.",
+    "category": "Members & server tools"
+  },
+  {
+    "name": "dailyquest",
+    "description": "Claim a daily economy quest reward.",
+    "category": "Economy & games"
+  },
+  {
+    "name": "beg",
+    "description": "Ask the community gods for spare coins.",
+    "category": "Economy & games"
+  },
+  {
+    "name": "duel",
+    "description": "Challenge a member to a friendly duel.",
+    "category": "Fun & utilities"
+  }
+]
