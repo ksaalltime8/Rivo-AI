@@ -7,12 +7,10 @@ import MongoStore from "connect-mongo";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import morgan from "morgan";
-import path from "node:path";
-import { existsSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 
 import { env, validateProductionConfig } from "./config.js";
 import { connectDatabase } from "./db.js";
+
 import {
   csrfGuard,
   attachUser,
@@ -23,8 +21,9 @@ import auth from "./routes/auth.js";
 import api from "./routes/api.js";
 import webhooks from "./routes/webhooks.js";
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-const publicDir = path.resolve(here, "../public");
+const FRONTEND_ORIGIN = (
+  env.FRONTEND_URL || "https://iik27.com"
+).replace(/\/$/, "");
 
 async function startServer() {
   validateProductionConfig();
@@ -34,10 +33,38 @@ async function startServer() {
   const app = express();
 
   app.disable("x-powered-by");
-
-  // Hostinger reverse proxy configuration.
-  // Required for correct client IP detection and rate limiting.
   app.set("trust proxy", 1);
+
+  // CORS: allow the Rivo website to communicate with this API.
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+
+    if (origin && origin !== FRONTEND_ORIGIN) {
+      return res.status(403).json({
+        error: "Origin not allowed."
+      });
+    }
+
+    if (origin === FRONTEND_ORIGIN) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+      res.setHeader("Vary", "Origin");
+      res.setHeader(
+        "Access-Control-Allow-Methods",
+        "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+      );
+      res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Content-Type, X-CSRF-Token, Authorization"
+      );
+    }
+
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(204);
+    }
+
+    next();
+  });
 
   app.use(
     helmet({
@@ -54,17 +81,17 @@ async function startServer() {
     )
   );
 
+  // Session configuration.
   const sessionOptions = {
     name: "rivo.sid",
-    secret:
-      env.SESSION_SECRET ||
-      "local-development-secret-change-before-production",
+    secret: env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     rolling: true,
     cookie: {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite:
+        env.NODE_ENV === "production" ? "none" : "lax",
       secure: env.NODE_ENV === "production",
       maxAge: 7 * 24 * 60 * 60 * 1000
     }
@@ -131,7 +158,7 @@ async function startServer() {
     })
   );
 
-  // Generate a CSRF token for API sessions.
+  // Create a CSRF token for each API session.
   app.use((req, res, next) => {
     if (
       req.path.startsWith("/api/") &&
@@ -149,41 +176,6 @@ async function startServer() {
   app.use("/api/auth", auth);
   app.use("/api", csrfGuard, api);
   app.use("/api/webhooks", webhooks);
-
-  // Serve frontend files only when the directory exists.
-  const publicAvailable = existsSync(publicDir);
-
-  if (publicAvailable) {
-    app.use(
-      express.static(publicDir, {
-        setHeaders(res, filePath) {
-          if (/\.(css|js)$/i.test(filePath)) {
-            res.setHeader(
-              "Cache-Control",
-              "no-cache, must-revalidate"
-            );
-          }
-        }
-      })
-    );
-  } else {
-    console.warn(
-      `[Rivo] Frontend directory not found: ${publicDir}`
-    );
-  }
-
-  // Safe frontend page delivery.
-  function sendPage(fileName, res) {
-    const filePath = path.join(publicDir, fileName);
-
-    if (!existsSync(filePath)) {
-      return res.status(503).send(
-        `Rivo frontend is not deployed. Missing file: ${fileName}`
-      );
-    }
-
-    return res.sendFile(filePath);
-  }
 
   // Discord bot invite.
   app.get("/invite", (_req, res) => {
@@ -206,28 +198,11 @@ async function startServer() {
     res.redirect(url);
   });
 
-  // Website pages.
-  app.get("/", (_req, res) =>
-    sendPage("index.html", res)
-  );
-
-  app.get("/dashboard", (_req, res) =>
-    sendPage("dashboard.html", res)
-  );
-
-  app.get("/owner", (_req, res) =>
-    sendPage("owner.html", res)
-  );
-
-  // API and frontend 404 handling.
+  // API-only 404 handling.
   app.use((req, res) => {
-    if (req.path.startsWith("/api/")) {
-      return res.status(404).json({
-        error: "API endpoint not found."
-      });
-    }
-
-    res.status(404).send("Not found.");
+    res.status(404).json({
+      error: "API endpoint not found."
+    });
   });
 
   // Central error handler.
@@ -260,15 +235,9 @@ async function startServer() {
       `[Rivo Backend V2] listening on ${env.PORT}`
     );
 
-    console.log(
-      `[Rivo] Hostinger proxy trust enabled`
-    );
-
-    console.log(
-      `[Rivo] Frontend: ${
-        publicAvailable ? "directory found" : "not deployed"
-      }`
-    );
+    console.log("[Rivo] Hostinger proxy trust enabled");
+    console.log(`[Rivo] CORS frontend: ${FRONTEND_ORIGIN}`);
+    console.log("[Rivo] API-only mode enabled");
   });
 
   // Graceful shutdown.
