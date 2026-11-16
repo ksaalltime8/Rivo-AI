@@ -13,7 +13,9 @@ function validateProductionConfig() {
     "DISCORD_CLIENT_ID",
     "DISCORD_CLIENT_SECRET",
     "DISCORD_REDIRECT_URI",
-    "FRONTEND_URL"
+    "FRONTEND_URL",
+    "OWNER_EMAIL",
+    "OWNER_PASSWORD_HASH"
   ];
 
   const missing = required.filter(
@@ -54,11 +56,35 @@ function validateProductionConfig() {
     throw new Error("DISCORD_REDIRECT_URI must use HTTPS.");
   }
 
-  if (!env.DISCORD_REDIRECT_URI.endsWith(
-    "/api/auth/discord/callback"
-  )) {
+  if (
+    !env.DISCORD_REDIRECT_URI.endsWith(
+      "/api/auth/discord/callback"
+    )
+  ) {
     throw new Error(
       "DISCORD_REDIRECT_URI must point to the Discord callback route."
+    );
+  }
+
+  // Validate owner email.
+  const ownerEmail = env.OWNER_EMAIL.trim();
+
+  if (
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ownerEmail)
+  ) {
+    throw new Error(
+      "OWNER_EMAIL must be a valid email address."
+    );
+  }
+
+  // Expected format:
+  // scrypt$<32-character-salt-hex>$<128-character-hash-hex>
+  const passwordHashPattern =
+    /^scrypt\$[a-f0-9]{32}\$[a-f0-9]{128}$/i;
+
+  if (!passwordHashPattern.test(env.OWNER_PASSWORD_HASH)) {
+    throw new Error(
+      "OWNER_PASSWORD_HASH has an invalid format. Generate it using the Rivo password hash generator."
     );
   }
 }
