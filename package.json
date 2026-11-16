@@ -1,3 +1,4 @@
+
 {
   "name": "rivo-website",
   "version": "1.2.0",
@@ -6,7 +7,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "check": "node --check src/server.js && node --check src/routes/api.js && node --check public/dashboard.js && node --check public/owner.js",
+    "check": "node --check src/server.js && node --check src/routes/api.js && node --check src/routes/owner-auth.js && node --check public/dashboard.js && node --check public/owner.js",
     "test": "node --test"
   },
   "engines": {
