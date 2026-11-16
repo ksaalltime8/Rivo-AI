@@ -1,4 +1,3 @@
-
 import "dotenv/config";
 
 import express from "express";
@@ -18,6 +17,7 @@ import {
 } from "./security.js";
 
 import auth from "./routes/auth.js";
+import ownerAuth from "./routes/owner-auth.js";
 import api from "./routes/api.js";
 import webhooks from "./routes/webhooks.js";
 
@@ -33,11 +33,15 @@ async function startServer() {
   const app = express();
 
   app.disable("x-powered-by");
+
+  // Hostinger reverse proxy.
   app.set("trust proxy", 1);
 
-  // CORS: allow the Rivo website to communicate with this API.
+  // CORS configuration.
   app.use((req, res, next) => {
     const origin = req.headers.origin;
+
+    res.vary("Origin");
 
     if (origin && origin !== FRONTEND_ORIGIN) {
       return res.status(403).json({
@@ -48,11 +52,12 @@ async function startServer() {
     if (origin === FRONTEND_ORIGIN) {
       res.setHeader("Access-Control-Allow-Origin", origin);
       res.setHeader("Access-Control-Allow-Credentials", "true");
-      res.setHeader("Vary", "Origin");
+
       res.setHeader(
         "Access-Control-Allow-Methods",
         "GET, POST, PUT, PATCH, DELETE, OPTIONS"
       );
+
       res.setHeader(
         "Access-Control-Allow-Headers",
         "Content-Type, X-CSRF-Token, Authorization"
@@ -81,7 +86,7 @@ async function startServer() {
     )
   );
 
-  // Session configuration.
+  // Persistent MongoDB-backed sessions.
   const sessionOptions = {
     name: "rivo.sid",
     secret: env.SESSION_SECRET,
@@ -90,8 +95,7 @@ async function startServer() {
     rolling: true,
     cookie: {
       httpOnly: true,
-      sameSite:
-        env.NODE_ENV === "production" ? "none" : "lax",
+      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
       secure: env.NODE_ENV === "production",
       maxAge: 7 * 24 * 60 * 60 * 1000
     }
@@ -137,7 +141,7 @@ async function startServer() {
     })
   );
 
-  // Global API rate limit.
+  // General API rate limit.
   app.use(
     rateLimit({
       windowMs: 60_000,
@@ -147,7 +151,7 @@ async function startServer() {
     })
   );
 
-  // Additional authentication rate limit.
+  // Discord and other provider authentication rate limit.
   app.use(
     "/api/auth",
     rateLimit({
@@ -158,7 +162,18 @@ async function startServer() {
     })
   );
 
-  // Create a CSRF token for each API session.
+  // Dedicated owner login rate limit.
+  const ownerLoginLimiter = rateLimit({
+    windowMs: 15 * 60_000,
+    limit: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      error: "Too many owner login attempts. Please try again later."
+    }
+  });
+
+  // Initialize a CSRF token for API sessions.
   app.use((req, res, next) => {
     if (
       req.path.startsWith("/api/") &&
@@ -170,11 +185,24 @@ async function startServer() {
     next();
   });
 
+  // Attach the regular Rivo user, when one is signed in.
   app.use(attachUser);
 
-  // API routes.
+  // Existing Discord/Kick/YouTube authentication.
   app.use("/api/auth", auth);
+
+  // Separate private owner authentication.
+  app.use(
+    "/api/owner/auth",
+    ownerLoginLimiter,
+    csrfGuard,
+    ownerAuth
+  );
+
+  // Existing application API.
   app.use("/api", csrfGuard, api);
+
+  // Provider webhooks.
   app.use("/api/webhooks", webhooks);
 
   // Discord bot invite.
@@ -237,6 +265,7 @@ async function startServer() {
 
     console.log("[Rivo] Hostinger proxy trust enabled");
     console.log(`[Rivo] CORS frontend: ${FRONTEND_ORIGIN}`);
+    console.log("[Rivo] Separate owner authentication enabled");
     console.log("[Rivo] API-only mode enabled");
   });
 
