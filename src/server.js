@@ -1,34 +1,253 @@
 import "dotenv/config";
-import express from "express";import session from "express-session";import MongoStore from "connect-mongo";import helmet from "helmet";import rateLimit from "express-rate-limit";import path from "node:path";import {fileURLToPath} from "node:url";
-import {connectDatabase} from "./db.js";import {csrfGuard,randomState} from "./security.js";import {FeatureEntry} from "./models.js";import auth from "./routes/auth.js";import api from "./routes/api.js";import webhooks from "./routes/webhooks.js";
-const here=path.dirname(fileURLToPath(import.meta.url));const app=express();app.disable("x-powered-by");if(process.env.NODE_ENV==="production")app.set("trust proxy",1);
-app.use(helmet({contentSecurityPolicy:false}));
-app.post("/api/webhooks/kick",express.raw({type:"application/json",limit:"1mb"}));
-app.post("/api/webhooks/twitch",express.raw({type:"application/json",limit:"1mb"}));
-app.get("/api/webhooks/youtube",(req,res,next)=>next());app.post("/api/webhooks/youtube",express.raw({type:["application/atom+xml","application/xml","text/xml"],limit:"1mb"}));
-app.use(express.json({limit:"1mb"}));const authLimiter=rateLimit({windowMs:15*60*1000,limit:30,standardHeaders:true,legacyHeaders:false});app.use("/api/auth",authLimiter);app.use(rateLimit({windowMs:60000,limit:120,standardHeaders:true,legacyHeaders:false}));
-if(process.env.NODE_ENV==="production"&&(!process.env.SESSION_SECRET||!process.env.TOKEN_ENCRYPTION_KEY))throw new Error("SESSION_SECRET and TOKEN_ENCRYPTION_KEY must be configured in production");
-app.use(session({name:"rivo.sid",secret:process.env.SESSION_SECRET||"development-only-change-this-session-secret",resave:false,saveUninitialized:false,store:process.env.MONGODB_URI?MongoStore.create({mongoUrl:process.env.MONGODB_URI,collectionName:"sessions"}):undefined,cookie:{httpOnly:true,sameSite:"lax",secure:process.env.NODE_ENV==="production",maxAge:7*86400000},rolling:true}));
-app.use((req,res,next)=>{if(req.path.startsWith("/api/")&&!req.session.csrfToken)req.session.csrfToken=randomState();next();});app.use("/api/auth",csrfGuard,auth);app.use("/api",csrfGuard,api);app.use("/api/webhooks",webhooks);app.use(express.static(path.join(here,"../public"),{setHeaders(res,filePath){if(path.extname(filePath)===".css"){res.setHeader("Content-Type","text/css; charset=utf-8");res.setHeader("Cache-Control","no-cache, must-revalidate");}}}));
-app.get("/invite",(req,res)=>{const id=process.env.DISCORD_CLIENT_ID;if(!id)return res.status(503).send("Rivo invite is not configured. Set DISCORD_CLIENT_ID.");const permissions=process.env.DISCORD_BOT_PERMISSIONS||"1099780156438";const q=new URLSearchParams({client_id:id,scope:"bot applications.commands",permissions});res.redirect(`https://discord.com/oauth2/authorize?${q}`);});
-app.get("/",(req,res)=>res.sendFile(path.join(here,"../public/index.html")));app.get("/dashboard",(req,res)=>res.sendFile(path.join(here,"../public/dashboard.html")));app.get("/owner",(req,res)=>res.sendFile(path.join(here,"../public/owner.html")));
-app.use((err,req,res,next)=>{console.error("[Rivo Website]",err);res.status(500).json({error:"Internal server error"});});
-await connectDatabase();
-if(await FeatureEntry.countDocuments()===0){await FeatureEntry.insertMany([
-{title:"Moderation command suite",slug:"moderation-command-suite",category:"Moderation",icon:"⚖",status:"available",description:"Handle everyday server moderation with member actions, warnings, timeouts, message cleanup, channel locks, and role management.",highlights:["Ban, kick, timeout and untimeout","Warnings and warning history","Purge messages and manage channels","Role and nickname management"],sortOrder:1},
-{title:"Community essentials",slug:"community-essentials",category:"Community",icon:"◈",status:"available",description:"Give your members useful community tools, from polls and suggestions to welcome messages, roles, and starboard highlights.",highlights:["Welcome and goodbye messages","Polls and suggestions","Autoroles and starboard","Tickets and member utilities"],sortOrder:2},
-{title:"XP and leveling",slug:"xp-and-leveling",category:"Engagement",icon:"✦",status:"available",description:"Reward participation with experience points, levels, and server leaderboards. Configure the experience around your community.",highlights:["Message XP and levels","Member level lookup","Server leaderboard"],sortOrder:3},
-{title:"Virtual economy",slug:"virtual-economy",category:"Engagement",icon:"◉",status:"available",description:"Start a lightweight server currency experience with balances, daily rewards, and work rewards.",highlights:["Wallet balances","Daily rewards","Work rewards"],sortOrder:4},
-{title:"Rivo AutoMod",slug:"rivo-automod",category:"Safety",icon:"⛨",status:"available",description:"Configure starter automatic message protection for spam, invite links, blocked phrases, links, excessive caps, and mass mentions.",highlights:["Spam and invite detection","Blocked words and links","Caps and mention filters"],sortOrder:5},
-{title:"Rivo Guardian advanced protection",slug:"rivo-guardian-advanced",category:"Security",icon:"⛨",status:"coming_soon",description:"A deeper security center for raid response, suspicious permission changes, anti-nuke safeguards, trusted operators, and recovery workflows.",highlights:["Configurable raid response","Anti-nuke safeguards","Security audit and recovery"],sortOrder:6},
-{title:"Rivo Flow visual automation",slug:"rivo-flow-visual",category:"Automation",icon:"⌁",status:"coming_soon",description:"Build multi-step workflows using visual triggers, conditions, delays, and actions without writing code.",highlights:["Visual workflow builder","Reusable triggers and actions","Approval gates for sensitive actions"],sortOrder:7},
-{title:"Advanced ticket center",slug:"advanced-ticket-center",category:"Support",icon:"▤",status:"coming_soon",description:"A full support desk with ticket panels, staff assignment, priorities, transcripts, departments, and feedback analytics.",highlights:["Department routing","Ticket transcripts","Staff assignment and feedback"],sortOrder:8},
-{title:"Creator integrations",slug:"creator-integrations",category:"Creator tools",icon:"↗",status:"beta",description:"Connect creator platforms to send configured live-stream and upload notifications into Discord. Provider setup and permissions are required.",highlights:["Kick live alerts","Twitch EventSub alerts","YouTube upload notifications"],sortOrder:9},
-{title:"Rivo AI assistant",slug:"rivo-ai-assistant",category:"Intelligence",icon:"✧",status:"coming_soon",description:"An optional AI assistant for community FAQs, support suggestions, summaries, and reviewed moderation assistance.",highlights:["Server knowledge assistant","AI-assisted support","Human approval for sensitive actions"],sortOrder:10},
-{title:"Analytics and community insights",slug:"analytics-community-insights",category:"Analytics",icon:"▥",status:"coming_soon",description:"Understand member growth, engagement, moderation activity, ticket performance, and creator activity with clear reports.",highlights:["Engagement trends","Moderation reporting","Exportable reports"],sortOrder:11},
-{title:"Custom command studio",slug:"custom-command-studio",category:"Customization",icon:"⌘",status:"beta",description:"Create simple server-specific text commands from the dashboard and manage responses without editing bot source code.",highlights:["Custom prefix commands","Server-specific responses","Dashboard configuration"],sortOrder:12},
-{title:"Voice rooms and event tools",slug:"voice-rooms-events",category:"Community",icon:"♫",status:"coming_soon",description:"Manage temporary voice rooms, scheduled community events, attendance, reminders, and stage workflows.",highlights:["Temporary voice channels","Event scheduling","Attendance and reminders"],sortOrder:13},
-{title:"Developer integrations",slug:"developer-integrations",category:"Developers",icon:"⌁",status:"coming_soon",description:"Extend Rivo with documented APIs, event subscriptions, webhooks, and carefully permissioned integrations.",highlights:["REST API","Webhook events","Integration permissions"],sortOrder:14},
-{title:"Owner-managed roadmap",slug:"owner-managed-roadmap",category:"Platform",icon:"✦",status:"available",description:"The Rivo owner can publish, edit, hide, reorder, and update feature announcements directly from the private Owner Studio.",highlights:["Create features without code changes","Set Available, Beta, or Coming Soon","Publish changes to the public website"],sortOrder:15}
-]);}
-const port=Number(process.env.PORT||3000);app.listen(port,()=>console.log(`[Rivo Website] listening on ${port}`));
+
+import express from "express";
+import session from "express-session";
+import MongoStore from "connect-mongo";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import morgan from "morgan";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { env, validateProductionConfig } from "./config.js";
+import { connectDatabase } from "./db.js";
+import {
+  csrfGuard,
+  attachUser,
+  randomState
+} from "./security.js";
+
+import auth from "./routes/auth.js";
+import api from "./routes/api.js";
+import webhooks from "./routes/webhooks.js";
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const publicDir = path.resolve(here, "../public");
+
+async function startServer() {
+  validateProductionConfig();
+
+  await connectDatabase();
+
+  const app = express();
+
+  app.disable("x-powered-by");
+
+  if (env.NODE_ENV === "production") {
+    app.set("trust proxy", 1);
+  }
+
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginResourcePolicy: {
+        policy: "cross-origin"
+      }
+    })
+  );
+
+  app.use(
+    morgan(
+      env.NODE_ENV === "production" ? "combined" : "dev"
+    )
+  );
+
+  const sessionOptions = {
+    name: "rivo.sid",
+    secret:
+      env.SESSION_SECRET ||
+      "local-development-secret-change-before-production",
+    resave: false,
+    saveUninitialized: false,
+    rolling: true,
+    cookie: {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: env.NODE_ENV === "production",
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    }
+  };
+
+  if (env.MONGODB_URI) {
+    sessionOptions.store = MongoStore.create({
+      mongoUrl: env.MONGODB_URI,
+      collectionName: "rivo_sessions",
+      ttl: 7 * 24 * 60 * 60
+    });
+  }
+
+  app.use(session(sessionOptions));
+
+  // Raw body must be available for webhook signature verification.
+  app.post(
+    "/api/webhooks/kick",
+    express.raw({
+      type: "application/json",
+      limit: "1mb"
+    })
+  );
+
+  app.post(
+    "/api/webhooks/youtube",
+    express.raw({
+      type: [
+        "application/atom+xml",
+        "application/xml",
+        "text/xml"
+      ],
+      limit: "1mb"
+    })
+  );
+
+  app.use(express.json({ limit: "1mb" }));
+  app.use(express.urlencoded({
+    extended: false,
+    limit: "1mb"
+  }));
+
+  app.use(
+    rateLimit({
+      windowMs: 60_000,
+      limit: 180,
+      standardHeaders: true,
+      legacyHeaders: false
+    })
+  );
+
+  app.use(
+    "/api/auth",
+    rateLimit({
+      windowMs: 15 * 60_000,
+      limit: 30,
+      standardHeaders: true,
+      legacyHeaders: false
+    })
+  );
+
+  app.use((req, res, next) => {
+    if (
+      req.path.startsWith("/api/") &&
+      !req.session.csrfToken
+    ) {
+      req.session.csrfToken = randomState();
+    }
+
+    next();
+  });
+
+  app.use(attachUser);
+
+  app.use("/api/auth", auth);
+  app.use("/api", csrfGuard, api);
+  app.use("/api/webhooks", webhooks);
+
+  app.use(
+    express.static(publicDir, {
+      setHeaders(res, filePath) {
+        if (/\.(css|js)$/i.test(filePath)) {
+          res.setHeader(
+            "Cache-Control",
+            "no-cache, must-revalidate"
+          );
+        }
+      }
+    })
+  );
+
+  app.get("/invite", (_req, res) => {
+    if (!env.DISCORD_CLIENT_ID) {
+      return res.status(503).send(
+        "Rivo invite is not configured."
+      );
+    }
+
+    const url = new URL(
+      "https://discord.com/oauth2/authorize"
+    );
+
+    url.search = new URLSearchParams({
+      client_id: env.DISCORD_CLIENT_ID,
+      scope: "bot applications.commands",
+      permissions: env.DISCORD_BOT_PERMISSIONS
+    }).toString();
+
+    res.redirect(url);
+  });
+
+  app.get("/", (_req, res) =>
+    res.sendFile(path.join(publicDir, "index.html"))
+  );
+
+  app.get("/dashboard", (_req, res) =>
+    res.sendFile(path.join(publicDir, "dashboard.html"))
+  );
+
+  app.get("/owner", (_req, res) =>
+    res.sendFile(path.join(publicDir, "owner.html"))
+  );
+
+  app.use((req, res) => {
+    if (req.path.startsWith("/api/")) {
+      return res.status(404).json({
+        error: "API endpoint not found."
+      });
+    }
+
+    res.status(404).send("Not found.");
+  });
+
+  app.use((error, req, res, next) => {
+    console.error("[Rivo backend]", error);
+
+    if (res.headersSent) {
+      return next(error);
+    }
+
+    const status =
+      error.name === "ZodError"
+        ? 400
+        : Number(error.status) || 500;
+
+    res.status(status).json({
+      error:
+        status >= 500
+          ? "Internal server error."
+          : error.message,
+      ...(env.NODE_ENV !== "production" && status >= 500
+        ? { detail: error.message }
+        : {})
+    });
+  });
+
+  const server = app.listen(env.PORT, () => {
+    console.log(
+      `[Rivo Backend V2] listening on ${env.PORT}`
+    );
+  });
+
+  for (const signal of ["SIGINT", "SIGTERM"]) {
+    process.once(signal, () => {
+      console.log(`[Rivo] Received ${signal}`);
+
+      server.close(async () => {
+        console.log("[Rivo] HTTP server closed.");
+
+        try {
+          const mongoose = await import("mongoose");
+          await mongoose.default.disconnect();
+        } catch (error) {
+          console.error("[Rivo] Database shutdown:", error);
+        }
+
+        process.exit(0);
+      });
+    });
+  }
+
+  return server;
+}
+
+startServer().catch(error => {
+  console.error("[Rivo startup failed]", error);
+  process.exitCode = 1;
+});
